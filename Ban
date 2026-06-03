@@ -1,0 +1,9 @@
+local BannedPlayers = {
+	675726563
+}
+
+game.Players.PlayerAdded:Connect(function(player)
+	if table.find(BannedPlayers, player.UserId) then
+		player:Kick("Sorry")
+	end
+end)
