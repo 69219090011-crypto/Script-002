@@ -146,7 +146,7 @@ RunService.Heartbeat:Connect(function()
             local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
             if targetRoot then
                 -- Warp ไปข้างๆ target ห่าง 3 studs
-                local offset = targetRoot.CFrame * CFrame.new(0, 0, 3)
+                local offset = targetRoot.CFrame * CFrame.new(0, 0, 2)
                 HumanoidRootPart.CFrame = offset
             end
         end
