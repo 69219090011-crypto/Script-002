@@ -1,94 +1,164 @@
-local player = game.Players.LocalPlayer
+-- LocalScript ใน StarterPlayerScripts
+
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
+local LocalPlayer = Players.LocalPlayer
+local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
+local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
+local Humanoid = Character:WaitForChild("Humanoid")
 
--- ===== GUI =====
-local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
-gui.ResetOnSpawn = false
-
-local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,220,0,200)
-frame.Position = UDim2.new(0,20,0,200)
-frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
-frame.Active = true
-frame.Draggable = true
-
-local title = Instance.new("TextLabel", frame)
-title.Size = UDim2.new(1,0,0,30)
-title.Text = "เลือกผู้เล่น"
-title.BackgroundTransparency = 1
-
-local list = Instance.new("ScrollingFrame", frame)
-list.Size = UDim2.new(1,-20,0,120)
-list.Position = UDim2.new(0,10,0,30)
-list.CanvasSize = UDim2.new(0,0,0,0)
-list.BackgroundColor3 = Color3.fromRGB(40,40,40)
-
-local layout = Instance.new("UIListLayout", list)
-
-local toggle = Instance.new("TextButton", frame)
-toggle.Size = UDim2.new(1,-20,0,30)
-toggle.Position = UDim2.new(0,10,0,160)
-toggle.Text = "FOLLOW: OFF"
-
--- ===== ตัวแปร =====
+-- ตัวแปร
 local targetPlayer = nil
-local following = false
+local isFollowing = false
 
--- ===== สร้างปุ่มรายชื่อ =====
-local function refreshList()
-	list:ClearAllChildren()
-	layout.Parent = list
-	
-	for _, plr in pairs(Players:GetPlayers()) do
-		if plr ~= player then
-			local btn = Instance.new("TextButton")
-			btn.Size = UDim2.new(1,0,0,30)
-			btn.Text = plr.Name
-			btn.Parent = list
-			
-			btn.MouseButton1Click:Connect(function()
-				targetPlayer = plr
-			end)
-		end
-	end
-	
-	list.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
+-- สร้าง UI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "FollowUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.Parent = LocalPlayer.PlayerGui
+
+-- Frame หลัก (ลากได้)
+local MainFrame = Instance.new("Frame")
+MainFrame.Size = UDim2.new(0, 220, 0, 300)
+MainFrame.Position = UDim2.new(0, 10, 0.3, 0)
+MainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+MainFrame.BorderSizePixel = 0
+MainFrame.Active = true
+MainFrame.Draggable = true
+MainFrame.Parent = ScreenGui
+
+-- มุมโค้ง
+local Corner = Instance.new("UICorner")
+Corner.CornerRadius = UDim.new(0, 10)
+Corner.Parent = MainFrame
+
+-- Title
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 40)
+Title.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
+Title.BorderSizePixel = 0
+Title.Text = "🎯 Follow Player"
+Title.TextColor3 = Color3.new(1, 1, 1)
+Title.TextScaled = true
+Title.Font = Enum.Font.GothamBold
+Title.Parent = MainFrame
+
+local TitleCorner = Instance.new("UICorner")
+TitleCorner.CornerRadius = UDim.new(0, 10)
+TitleCorner.Parent = Title
+
+-- ScrollingFrame สำหรับรายชื่อผู้เล่น
+local ScrollFrame = Instance.new("ScrollingFrame")
+ScrollFrame.Size = UDim2.new(1, -10, 1, -100)
+ScrollFrame.Position = UDim2.new(0, 5, 0, 45)
+ScrollFrame.BackgroundTransparency = 1
+ScrollFrame.ScrollBarThickness = 4
+ScrollFrame.Parent = MainFrame
+
+local ListLayout = Instance.new("UIListLayout")
+ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+ListLayout.Padding = UDim.new(0, 5)
+ListLayout.Parent = ScrollFrame
+
+-- ปุ่ม Stop Follow
+local StopBtn = Instance.new("TextButton")
+StopBtn.Size = UDim2.new(1, -10, 0, 40)
+StopBtn.Position = UDim2.new(0, 5, 1, -48)
+StopBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+StopBtn.BorderSizePixel = 0
+StopBtn.Text = "⛔ หยุด Follow"
+StopBtn.TextColor3 = Color3.new(1, 1, 1)
+StopBtn.TextScaled = true
+StopBtn.Font = Enum.Font.GothamBold
+StopBtn.Parent = MainFrame
+
+local StopCorner = Instance.new("UICorner")
+StopCorner.CornerRadius = UDim.new(0, 8)
+StopCorner.Parent = StopBtn
+
+-- ฟังก์ชันสร้างปุ่มผู้เล่น
+local function createPlayerButton(player)
+    if player == LocalPlayer then return end
+
+    local Btn = Instance.new("TextButton")
+    Btn.Size = UDim2.new(1, -5, 0, 35)
+    Btn.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+    Btn.BorderSizePixel = 0
+    Btn.Text = "👤 " .. player.Name
+    Btn.TextColor3 = Color3.new(1, 1, 1)
+    Btn.TextScaled = true
+    Btn.Font = Enum.Font.Gotham
+    Btn.Parent = ScrollFrame
+
+    local BtnCorner = Instance.new("UICorner")
+    BtnCorner.CornerRadius = UDim.new(0, 6)
+    BtnCorner.Parent = Btn
+
+    Btn.MouseButton1Click:Connect(function()
+        targetPlayer = player
+        isFollowing = true
+        Title.Text = "🎯 Following: " .. player.Name
+
+        -- Reset สี ปุ่มทั้งหมด
+        for _, child in pairs(ScrollFrame:GetChildren()) do
+            if child:IsA("TextButton") then
+                child.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+            end
+        end
+        Btn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
+    end)
+
+    return Btn
 end
 
-refreshList()
-Players.PlayerAdded:Connect(refreshList)
-Players.PlayerRemoving:Connect(refreshList)
+-- โหลดรายชื่อผู้เล่นปัจจุบัน
+local function refreshPlayers()
+    for _, child in pairs(ScrollFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child:Destroy()
+        end
+    end
+    for _, player in pairs(Players:GetPlayers()) do
+        createPlayerButton(player)
+    end
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 5)
+end
 
--- ===== ปุ่มเปิด/ปิด =====
-toggle.MouseButton1Click:Connect(function()
-	following = not following
-	
-	if following then
-		toggle.Text = "FOLLOW: ON"
-	else
-		toggle.Text = "FOLLOW: OFF"
-	end
+refreshPlayers()
+Players.PlayerAdded:Connect(function(p)
+    createPlayerButton(p)
+    ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 5)
+end)
+Players.PlayerRemoving:Connect(function(p)
+    if targetPlayer == p then
+        isFollowing = false
+        targetPlayer = nil
+        Title.Text = "🎯 Follow Player"
+    end
+    refreshPlayers()
 end)
 
--- ===== ระบบตาม =====
-RunService.RenderStepped:Connect(function()
-	if following and targetPlayer then
-		local myChar = player.Character
-		local targetChar = targetPlayer.Character
-		
-		if myChar and targetChar then
-			local myRoot = myChar:FindFirstChild("HumanoidRootPart")
-			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
-			
-			if myRoot and targetRoot then
-				myRoot.CFrame = targetRoot.CFrame * CFrame.new(0,0,3)
-			end
-		end
-	end
+-- ปุ่ม Stop
+StopBtn.MouseButton1Click:Connect(function()
+    isFollowing = false
+    targetPlayer = nil
+    Title.Text = "🎯 Follow Player"
+    for _, child in pairs(ScrollFrame:GetChildren()) do
+        if child:IsA("TextButton") then
+            child.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+        end
+    end
 end)
 
--- ===== ตายแล้วไม่หาย =====
-player.CharacterAdded:Connect(function()
-	task.wait(1)
+-- Follow Logic
+RunService.Heartbeat:Connect(function()
+    if isFollowing and targetPlayer then
+        local targetChar = targetPlayer.Character
+        if targetChar then
+            local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+            if targetRoot then
+                Humanoid:MoveTo(targetRoot.Position)
+            end
+        end
+    end
 end)
