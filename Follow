@@ -1,4 +1,5 @@
 local player = game.Players.LocalPlayer
+local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 -- ===== GUI =====
@@ -6,37 +7,71 @@ local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,220,0,120)
+frame.Size = UDim2.new(0,220,0,200)
 frame.Position = UDim2.new(0,20,0,200)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 frame.Draggable = true
 
-local box = Instance.new("TextBox", frame)
-box.Size = UDim2.new(1,-20,0,40)
-box.Position = UDim2.new(0,10,0,10)
-box.PlaceholderText = "ใส่ชื่อคน"
+local title = Instance.new("TextLabel", frame)
+title.Size = UDim2.new(1,0,0,30)
+title.Text = "เลือกผู้เล่น"
+title.BackgroundTransparency = 1
 
-local btn = Instance.new("TextButton", frame)
-btn.Size = UDim2.new(1,-20,0,40)
-btn.Position = UDim2.new(0,10,0,60)
-btn.Text = "FOLLOW: OFF"
+local list = Instance.new("ScrollingFrame", frame)
+list.Size = UDim2.new(1,-20,0,120)
+list.Position = UDim2.new(0,10,0,30)
+list.CanvasSize = UDim2.new(0,0,0,0)
+list.BackgroundColor3 = Color3.fromRGB(40,40,40)
 
--- ===== FOLLOW =====
-local following = false
+local layout = Instance.new("UIListLayout", list)
+
+local toggle = Instance.new("TextButton", frame)
+toggle.Size = UDim2.new(1,-20,0,30)
+toggle.Position = UDim2.new(0,10,0,160)
+toggle.Text = "FOLLOW: OFF"
+
+-- ===== ตัวแปร =====
 local targetPlayer = nil
+local following = false
 
-btn.MouseButton1Click:Connect(function()
+-- ===== สร้างปุ่มรายชื่อ =====
+local function refreshList()
+	list:ClearAllChildren()
+	layout.Parent = list
+	
+	for _, plr in pairs(Players:GetPlayers()) do
+		if plr ~= player then
+			local btn = Instance.new("TextButton")
+			btn.Size = UDim2.new(1,0,0,30)
+			btn.Text = plr.Name
+			btn.Parent = list
+			
+			btn.MouseButton1Click:Connect(function()
+				targetPlayer = plr
+			end)
+		end
+	end
+	
+	list.CanvasSize = UDim2.new(0,0,0,layout.AbsoluteContentSize.Y)
+end
+
+refreshList()
+Players.PlayerAdded:Connect(refreshList)
+Players.PlayerRemoving:Connect(refreshList)
+
+-- ===== ปุ่มเปิด/ปิด =====
+toggle.MouseButton1Click:Connect(function()
 	following = not following
 	
 	if following then
-		btn.Text = "FOLLOW: ON"
-		targetPlayer = game.Players:FindFirstChild(box.Text)
+		toggle.Text = "FOLLOW: ON"
 	else
-		btn.Text = "FOLLOW: OFF"
+		toggle.Text = "FOLLOW: OFF"
 	end
 end)
 
+-- ===== ระบบตาม =====
 RunService.RenderStepped:Connect(function()
 	if following and targetPlayer then
 		local myChar = player.Character
@@ -47,7 +82,6 @@ RunService.RenderStepped:Connect(function()
 			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
 			
 			if myRoot and targetRoot then
-				-- ยืนด้านหลัง
 				myRoot.CFrame = targetRoot.CFrame * CFrame.new(0,0,3)
 			end
 		end
