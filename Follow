@@ -5,7 +5,6 @@ local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
 local Character = LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 local HumanoidRootPart = Character:WaitForChild("HumanoidRootPart")
-local Humanoid = Character:WaitForChild("Humanoid")
 
 -- ตัวแปร
 local targetPlayer = nil
@@ -17,7 +16,6 @@ ScreenGui.Name = "FollowUI"
 ScreenGui.ResetOnSpawn = false
 ScreenGui.Parent = LocalPlayer.PlayerGui
 
--- Frame หลัก (ลากได้)
 local MainFrame = Instance.new("Frame")
 MainFrame.Size = UDim2.new(0, 220, 0, 300)
 MainFrame.Position = UDim2.new(0, 10, 0.3, 0)
@@ -27,17 +25,15 @@ MainFrame.Active = true
 MainFrame.Draggable = true
 MainFrame.Parent = ScreenGui
 
--- มุมโค้ง
 local Corner = Instance.new("UICorner")
 Corner.CornerRadius = UDim.new(0, 10)
 Corner.Parent = MainFrame
 
--- Title
 local Title = Instance.new("TextLabel")
 Title.Size = UDim2.new(1, 0, 0, 40)
 Title.BackgroundColor3 = Color3.fromRGB(50, 50, 200)
 Title.BorderSizePixel = 0
-Title.Text = "🎯 Follow Player"
+Title.Text = "⚡ Warp Follow"
 Title.TextColor3 = Color3.new(1, 1, 1)
 Title.TextScaled = true
 Title.Font = Enum.Font.GothamBold
@@ -47,7 +43,6 @@ local TitleCorner = Instance.new("UICorner")
 TitleCorner.CornerRadius = UDim.new(0, 10)
 TitleCorner.Parent = Title
 
--- ScrollingFrame สำหรับรายชื่อผู้เล่น
 local ScrollFrame = Instance.new("ScrollingFrame")
 ScrollFrame.Size = UDim2.new(1, -10, 1, -100)
 ScrollFrame.Position = UDim2.new(0, 5, 0, 45)
@@ -60,13 +55,12 @@ ListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 ListLayout.Padding = UDim.new(0, 5)
 ListLayout.Parent = ScrollFrame
 
--- ปุ่ม Stop Follow
 local StopBtn = Instance.new("TextButton")
 StopBtn.Size = UDim2.new(1, -10, 0, 40)
 StopBtn.Position = UDim2.new(0, 5, 1, -48)
 StopBtn.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
 StopBtn.BorderSizePixel = 0
-StopBtn.Text = "⛔ หยุด Follow"
+StopBtn.Text = "⛔ หยุด Warp"
 StopBtn.TextColor3 = Color3.new(1, 1, 1)
 StopBtn.TextScaled = true
 StopBtn.Font = Enum.Font.GothamBold
@@ -76,7 +70,6 @@ local StopCorner = Instance.new("UICorner")
 StopCorner.CornerRadius = UDim.new(0, 8)
 StopCorner.Parent = StopBtn
 
--- ฟังก์ชันสร้างปุ่มผู้เล่น
 local function createPlayerButton(player)
     if player == LocalPlayer then return end
 
@@ -97,9 +90,8 @@ local function createPlayerButton(player)
     Btn.MouseButton1Click:Connect(function()
         targetPlayer = player
         isFollowing = true
-        Title.Text = "🎯 Following: " .. player.Name
+        Title.Text = "⚡ Warping: " .. player.Name
 
-        -- Reset สี ปุ่มทั้งหมด
         for _, child in pairs(ScrollFrame:GetChildren()) do
             if child:IsA("TextButton") then
                 child.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -107,16 +99,11 @@ local function createPlayerButton(player)
         end
         Btn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
     end)
-
-    return Btn
 end
 
--- โหลดรายชื่อผู้เล่นปัจจุบัน
 local function refreshPlayers()
     for _, child in pairs(ScrollFrame:GetChildren()) do
-        if child:IsA("TextButton") then
-            child:Destroy()
-        end
+        if child:IsA("TextButton") then child:Destroy() end
     end
     for _, player in pairs(Players:GetPlayers()) do
         createPlayerButton(player)
@@ -125,24 +112,25 @@ local function refreshPlayers()
 end
 
 refreshPlayers()
+
 Players.PlayerAdded:Connect(function(p)
     createPlayerButton(p)
     ScrollFrame.CanvasSize = UDim2.new(0, 0, 0, ListLayout.AbsoluteContentSize.Y + 5)
 end)
+
 Players.PlayerRemoving:Connect(function(p)
     if targetPlayer == p then
         isFollowing = false
         targetPlayer = nil
-        Title.Text = "🎯 Follow Player"
+        Title.Text = "⚡ Warp Follow"
     end
     refreshPlayers()
 end)
 
--- ปุ่ม Stop
 StopBtn.MouseButton1Click:Connect(function()
     isFollowing = false
     targetPlayer = nil
-    Title.Text = "🎯 Follow Player"
+    Title.Text = "⚡ Warp Follow"
     for _, child in pairs(ScrollFrame:GetChildren()) do
         if child:IsA("TextButton") then
             child.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
@@ -150,15 +138,23 @@ StopBtn.MouseButton1Click:Connect(function()
     end
 end)
 
--- Follow Logic
+-- ⚡ Warp Logic — เทเลพอร์ตตรงๆ ทุก Heartbeat
 RunService.Heartbeat:Connect(function()
     if isFollowing and targetPlayer then
         local targetChar = targetPlayer.Character
         if targetChar then
             local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
             if targetRoot then
-                Humanoid:MoveTo(targetRoot.Position)
+                -- Warp ไปข้างๆ target ห่าง 3 studs
+                local offset = targetRoot.CFrame * CFrame.new(0, 0, 3)
+                HumanoidRootPart.CFrame = offset
             end
         end
     end
+end)
+
+-- รีเซ็ต Character หลัง Respawn
+LocalPlayer.CharacterAdded:Connect(function(newChar)
+    Character = newChar
+    HumanoidRootPart = newChar:WaitForChild("HumanoidRootPart")
 end)
