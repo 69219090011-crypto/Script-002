@@ -1,0 +1,60 @@
+local player = game.Players.LocalPlayer
+local RunService = game:GetService("RunService")
+
+-- ===== GUI =====
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,220,0,120)
+frame.Position = UDim2.new(0,20,0,200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+
+local box = Instance.new("TextBox", frame)
+box.Size = UDim2.new(1,-20,0,40)
+box.Position = UDim2.new(0,10,0,10)
+box.PlaceholderText = "ใส่ชื่อคน"
+
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,0,40)
+btn.Position = UDim2.new(0,10,0,60)
+btn.Text = "FOLLOW: OFF"
+
+-- ===== FOLLOW =====
+local following = false
+local targetPlayer = nil
+
+btn.MouseButton1Click:Connect(function()
+	following = not following
+	
+	if following then
+		btn.Text = "FOLLOW: ON"
+		targetPlayer = game.Players:FindFirstChild(box.Text)
+	else
+		btn.Text = "FOLLOW: OFF"
+	end
+end)
+
+RunService.RenderStepped:Connect(function()
+	if following and targetPlayer then
+		local myChar = player.Character
+		local targetChar = targetPlayer.Character
+		
+		if myChar and targetChar then
+			local myRoot = myChar:FindFirstChild("HumanoidRootPart")
+			local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+			
+			if myRoot and targetRoot then
+				-- ยืนด้านหลัง
+				myRoot.CFrame = targetRoot.CFrame * CFrame.new(0,0,3)
+			end
+		end
+	end
+end)
+
+-- ===== ตายแล้วไม่หาย =====
+player.CharacterAdded:Connect(function()
+	task.wait(1)
+end)
