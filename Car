@@ -1,0 +1,362 @@
+local x76323030343942 = game:GetService("Players")
+local x763833324538 = game:GetService("RunService")
+local x76323845463645 = game:GetService("UserInputService")
+local x76413343313739 = x76323030343942.LocalPlayer
+local x76384642444331 = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
+local x76443930353634 = 0.01
+local x76343734373831 = 0.05
+local x76413046453839 = 200
+local x763742304341 = 1
+local x76333732454344 = false
+local x76343637383532 = false
+local x76373541434445 = false
+local x76373330463544 = Enum.KeyCode.W
+local x76364331333131 = Enum.KeyCode.S
+local x76394139444341 = Enum.KeyCode.P
+local x76433338343539 = Enum.KeyCode.F
+local x76444539413737, x76384436323838 = nil, nil
+local x76313743453331 = x76413343313739.Character and x76413343313739.Character.Parent
+local x76414434433244 = false
+local x764232463931 = 5
+local x76333837454342 = nil
+local x76343343374133 = false
+local x76333830384138 = nil
+local function x76364334303735(x76314339303331)
+    return x76314339303331:FindFirstAncestor(x76413343313739.Name .. "'s Car")
+        or (x76314339303331:FindFirstAncestor("Body") and x76314339303331:FindFirstAncestor("Body").Parent)
+        or (x76314339303331:FindFirstAncestor("Misc") and x76314339303331:FindFirstAncestor("Misc").Parent)
+        or x76314339303331:FindFirstAncestorWhichIsA("Model")
+end
+local function x76383935363345()
+    local x76424339393630 = x76413343313739.Character
+    if not x76424339393630 then return nil end
+    local x76314133413733 = x76424339393630:FindFirstChildWhichIsA("Humanoid")
+    if not x76314133413733 then return nil end
+    local x76333246373036 = x76314133413733.SeatPart
+    return (x76333246373036 and x76333246373036:IsA("VehicleSeat")) and x76333246373036 or nil
+end
+local function x76334543313342(x76413636454433)
+     if x76413046453839 == math.huge then return end
+     local x76353831443742 = x76413636454433.AssemblyLinearVelocity
+     local x76453437354531 = Vector3.new(x76353831443742.X, 0, x76353831443742.Z)
+     if x76453437354531.Magnitude > x76413046453839 then
+         local x76323744443831 = x76453437354531.Unit * x76413046453839
+         x76413636454433.AssemblyLinearVelocity = Vector3.new(x76323744443831.X, x76353831443742.Y, x76323744443831.Z)
+     end
+ end
+ local function x76333933343536()
+     local x76394132444536 = x76383935363345()
+     if not x76394132444536 then return end
+     local x76424144464233 = x76364334303735(x76394132444536)
+     if not x76424144464233 or not x76424144464233:IsA("Model") then return end
+     if not x76424144464233.PrimaryPart then
+         x76424144464233.PrimaryPart = (x76394132444536.Parent == x76424144464233 and x76394132444536) or x76424144464233:FindFirstChildWhichIsA("BasePart")
+     end
+     local x76433235313333 = x76424144464233:GetPrimaryPartCFrame()
+     local x76344231444242 = x76433235313333.Position
+     local x76313635313946 = Vector3.new(x76433235313333.LookVector.X, 0, x76433235313333.LookVector.Z)
+     if x76313635313946.Magnitude < 0.01 then
+         x76313635313946 = Vector3.new(1, 0, 0)
+     else
+         x76313635313946 = x76313635313946.Unit
+     end
+     x76424144464233:SetPrimaryPartCFrame(CFrame.new(x76344231444242 + Vector3.new(0, 0.5, 0), x76344231444242 + Vector3.new(0, 0.5, 0) + x76313635313946))
+     x76394132444536.AssemblyLinearVelocity  = Vector3.new()
+     x76394132444536.AssemblyAngularVelocity = Vector3.new()
+ end
+local function x76453242434637()
+    if x76343343374133 then return end
+    local x76313830433639 = x76383935363345()
+    if not x76313830433639 then
+        if x76384436323838 then x76384436323838:Disconnect(); x76384436323838 = nil end
+        return
+    end
+    if x76333732454344 then return end
+    if x76313830433639.Anchored then return end
+    if x76373541434445 then
+        local x76334641393331 = x76313830433639.AssemblyLinearVelocity
+        local x76363138393031 = x76313830433639.CFrame
+        local x76333334383234 = x76363138393031.LookVector
+        local x76343035423645 = Vector3.new(x76334641393331.X, 0, x76334641393331.Z)
+
+        local x76414633454439 = x76343035423645:Dot(x76333334383234)
+        if x76414633454439 > 1 then
+            x76313830433639.AssemblyLinearVelocity = x76334641393331 * Vector3.new(1 - x76343734373831 * 2, 1, 1 - x76343734373831 * 2)
+        elseif x76414633454439 < -0.5 then
+            local x76363737423142 = x76443930353634 * 0.5
+            x76313830433639.AssemblyLinearVelocity = x76334641393331 - x76333334383234 * x76363737423142
+        else
+            x76313830433639.AssemblyLinearVelocity = x76334641393331 * Vector3.new(1 - x76343734373831, 1, 1 - x76343734373831)
+        end
+    elseif x76343637383532 then
+        local x76334641393331 = x76313830433639.AssemblyLinearVelocity
+        local x76363138393031 = x76313830433639.CFrame
+        local x76333334383234 = x76363138393031.LookVector
+        local x76343035423645 = Vector3.new(x76334641393331.X, 0, x76334641393331.Z)
+
+        local x76414633454439 = x76343035423645:Dot(x76333334383234)
+
+        if x76414633454439 < -1 then
+             x76313830433639.AssemblyLinearVelocity = x76334641393331 * (1 - x76343734373831 * 3)
+         else
+            x76313830433639.AssemblyLinearVelocity = x76334641393331 * Vector3.new(1 + x76443930353634, 1, 1 + x76443930353634)
+         end
+    else
+        local x76334641393331 = x76313830433639.AssemblyLinearVelocity
+        x76313830433639.AssemblyLinearVelocity = x76334641393331 * Vector3.new(1 - x76343734373831 * 0.1, 1, 1 - x76343734373831 * 0.1)
+    end
+    x76334543313342(x76313830433639)
+end
+local function x76393733413834()
+    if x76343637383532 or x76373541434445 then
+        if not x76384436323838 then x76384436323838 = x763833324538.Heartbeat:Connect(x76453242434637) end
+    else
+        if x76384436323838 then x76384436323838:Disconnect(); x76384436323838 = nil end
+    end
+end
+x76333830384138 = x763833324538.Heartbeat:Connect(function()
+    if x76343343374133 then return end
+    local x76434535413242 = x76383935363345()
+    if x76434535413242 then x76334543313342(x76434535413242) end
+end)
+local function x76353732414138()
+    if x76343343374133 then return end
+    local x76384239313438 = x76413343313739.Character
+    if not x76384239313438 then return end
+    local x76394132444536 = x76383935363345()
+    if not x76394132444536 then
+        if x76444539413737 then x76444539413737:Disconnect(); x76444539413737 = nil end
+        return
+    end
+    local x76424144464233 = x76364334303735(x76394132444536)
+    if not x76424144464233 or not x76424144464233:IsA("Model") then return end
+    x76384239313438.Parent = x76424144464233
+    if not x76424144464233.PrimaryPart then
+        x76424144464233.PrimaryPart = (x76394132444536.Parent == x76424144464233 and x76394132444536) or x76424144464233:FindFirstChildWhichIsA("BasePart")
+    end
+    local x763637373141 = x763742304341
+    local x76434541464635 = workspace.CurrentCamera.CFrame
+    local x76433235313333 = x76424144464233:GetPrimaryPartCFrame()
+    local x76393645413144 = Vector3.new(0, 0, 0)
+    if not x76323845463645:GetFocusedTextBox() then
+        local x76443436334444 = x76434541464635.RightVector
+        local x76353633423046 = x76434541464635.LookVector
+        if x76323845463645:IsKeyDown(Enum.KeyCode.D) then
+            x76393645413144 = x76393645413144 + x76443436334444 * x763637373141
+        end
+        if x76323845463645:IsKeyDown(Enum.KeyCode.A) then
+            x76393645413144 = x76393645413144 - x76443436334444 * x763637373141
+        end
+        if x76323845463645:IsKeyDown(Enum.KeyCode.W) then
+            x76393645413144 = x76393645413144 + x76353633423046 * x763637373141
+        end
+        if x76323845463645:IsKeyDown(Enum.KeyCode.S) then
+            x76393645413144 = x76393645413144 - x76353633423046 * x763637373141
+        end
+        if x76323845463645:IsKeyDown(Enum.KeyCode.E) then
+            x76393645413144 = x76393645413144 + Vector3.new(0, 1, 0) * x763637373141 / 2
+        end
+        if x76323845463645:IsKeyDown(Enum.KeyCode.Q) then
+            x76393645413144 = x76393645413144 - Vector3.new(0, 1, 0) * x763637373141 / 2
+        end
+    end
+    x76424144464233:SetPrimaryPartCFrame(CFrame.new(x76433235313333.Position + x76393645413144) * (x76433235313333 - x76433235313333.Position))
+    x76394132444536.AssemblyLinearVelocity  = Vector3.new()
+    x76394132444536.AssemblyAngularVelocity = Vector3.new()
+end
+local function x76383136454636()
+    if x76333732454344 then
+        if not x76444539413737 then x76444539413737 = x763833324538.Heartbeat:Connect(x76353732414138) end
+    else
+        if x76444539413737 then x76444539413737:Disconnect(); x76444539413737 = nil end
+        local x76314134443146 = x76413343313739.Character
+        if x76314134443146 then x76314134443146.Parent = x76313743453331 or x76314134443146.Parent end
+    end
+end
+local function x76354246363132(x76463531424541)
+    if x76343343374133 then return end
+    if x76333732454344 then return end
+    local x76323343384331 = x76383935363345()
+    if not x76323343384331 then
+        if x76333837454342 then x76333837454342:Disconnect(); x76333837454342 = nil end
+        return
+    end
+    local x76434634364435 = x76323343384331.AssemblyLinearVelocity
+    local x76394536373446 = Vector3.new(x76434634364435.X, 0, x76434634364435.Z).Magnitude
+    if x76394536373446 < 2 then return end
+    local x76384241443234 = x76323343384331.CFrame
+    local x76313844323637 = x76384241443234.LookVector
+    local x76423339413038 = x76323343384331.AssemblyAngularVelocity
+    local x76463932453144 = math.clamp(0.003 / x764232463931, 0.0003, 0.003)
+    local x763644423046 = Vector3.new(x76434634364435.X, 0, x76434634364435.Z)
+    local x76363135324541 = x763644423046:Lerp(x76313844323637 * x76394536373446, x76463932453144)
+    x76323343384331.AssemblyLinearVelocity = Vector3.new(x76363135324541.X, x76434634364435.Y, x76363135324541.Z)
+    local x76424445363430 = math.clamp(x764232463931 * 0.06, 0.1, 0.5)
+    local x76444341384432 = 4.0
+    local x763142394537 = x76423339413038.Y
+    if x76323845463645:IsKeyDown(Enum.KeyCode.A) then
+        x763142394537 = math.clamp(x763142394537 + x76424445363430, -x76444341384432, x76444341384432)
+    elseif x76323845463645:IsKeyDown(Enum.KeyCode.D) then
+        x763142394537 = math.clamp(x763142394537 - x76424445363430, -x76444341384432, x76444341384432)
+    else
+        x763142394537 = x763142394537 * 0.80
+    end
+    x76323343384331.AssemblyAngularVelocity = Vector3.new(x76423339413038.X * 0.85, x763142394537, x76423339413038.Z * 0.85)
+end
+local function x76423735443046()
+    if x76414434433244 then
+        if not x76333837454342 then x76333837454342 = x763833324538.Heartbeat:Connect(x76354246363132) end
+    else
+        if x76333837454342 then x76333837454342:Disconnect(); x76333837454342 = nil end
+    end
+end
+local x76343733323933 = x76384642444331:CreateWindow({
+    Name                = "car speed changer",
+    LoadingTitle        = "car speed changer",
+    LoadingSubtitle     = "probably skidded",
+    ConfigurationSaving = { Enabled = false },
+    KeySystem           = false,
+})
+local x76454332423843  = x76343733323933:CreateTab("Speed",  "gauge")
+local x76424441433636 = x76343733323933:CreateTab("Flight", "plane")
+local x76423243393433   = x76343733323933:CreateTab("Misc",   "wrench")
+x76454332423843:CreateSection("Speed Controls")
+x76454332423843:CreateSlider({
+    Name         = "Acceleration",
+    Range        = {0, 50},
+    Increment    = 1,
+    CurrentValue = 10,
+    Flag           = "CCA2D33D",
+    Callback     = function(v) x76443930353634 = v / 1000 end,
+})
+x76454332423843:CreateSlider({
+    Name         = "Brake Force",
+    Range        = {0, 300},
+    Increment    = 1,
+    CurrentValue = 50,
+    Flag           = "40C2D002",
+    Callback     = function(v) x76343734373831 = v / 1000 end,
+})
+x76454332423843:CreateSlider({
+    Name         = "Speed Limiter  (0 = unlimited)",
+    Range        = {0, 1000},
+    Increment    = 1,
+    CurrentValue = 200,
+    Flag           = "537E95DF",
+    Callback     = function(v) x76413046453839 = (v == 0) and math.huge or v end,
+})
+x76454332423843:CreateSection("Keybinds")
+x76454332423843:CreateKeybind({
+    Name           = "Acceleration Key  (hold)",
+    CurrentKeybind = "W",
+    HoldToInteract = false,
+    Flag           = "32933106",
+    Callback       = function(v) if typeof(v) == "string" then x76373330463544 = Enum.KeyCode[v] or x76373330463544 end end,
+})
+x76454332423843:CreateKeybind({
+    Name           = "Brake Key  (hold)",
+    CurrentKeybind = "S",
+    HoldToInteract = false,
+    Flag           = "3DA0FBAC",
+    Callback       = function(v) if typeof(v) == "string" then x76364331333131 = Enum.KeyCode[v] or x76364331333131 end end,
+})
+x76454332423843:CreateKeybind({
+     Name           = "Stop Vehicle",
+     CurrentKeybind = "P",
+     HoldToInteract = false,
+     Flag           = "3180FAB2",
+     Callback       = function(v) if typeof(v) == "string" then x76394139444341 = Enum.KeyCode[v] or x76394139444341 end end,
+ })
+ x76454332423843:CreateKeybind({
+     Name           = "Flip Vehicle",
+     CurrentKeybind = "F",
+     HoldToInteract = false,
+     Flag           = "D2A3056A",
+     Callback       = function(v) if typeof(v) == "string" then x76433338343539 = Enum.KeyCode[v] or x76433338343539 end end,
+ })
+x76424441433636:CreateSection("Flight Controls")
+x76424441433636:CreateToggle({
+    Name         = "Flight Enabled",
+    CurrentValue = false,
+    Flag           = "F09DB22F",
+    Callback     = function(v) x76333732454344 = v; x76383136454636() end,
+})
+x76424441433636:CreateSlider({
+    Name         = "Flight Speed",
+    Range        = {0, 800},
+    Increment    = 1,
+    CurrentValue = 100,
+    Flag           = "1D84BD1C",
+    Callback     = function(v) x763742304341 = v / 100 end,
+})
+x76424441433636:CreateSection("Controls")
+x76424441433636:CreateLabel("|  Q = down  |  E = up |")
+x76423243393433:CreateSection("Drift")
+ x76423243393433:CreateToggle({
+     Name         = "Drift Mode",
+     CurrentValue = false,
+     Flag           = "4AE5CFBC",
+     Callback     = function(v) x76414434433244 = v; x76423735443046() end,
+ })
+ x76423243393433:CreateSlider({
+     Name         = "Drift Strength",
+     Range        = {1, 10},
+     Increment    = 1,
+     CurrentValue = 5,
+     Flag           = "79FAA723",
+     Callback     = function(v) x764232463931 = v end,
+ })
+x76423243393433:CreateSection("unload")
+x76423243393433:CreateButton({
+    Name     = "unload",
+    Callback = function()
+        x76343343374133 = true
+        x76343637383532 = false
+        x76373541434445 = false
+        x76333732454344 = false
+        x76414434433244  = false
+        if x76333830384138        then x76333830384138:Disconnect();        x76333830384138        = nil end
+        if x76384436323838        then x76384436323838:Disconnect();        x76384436323838        = nil end
+        if x76444539413737        then x76444539413737:Disconnect();        x76444539413737        = nil end
+        if x76333837454342        then x76333837454342:Disconnect();        x76333837454342        = nil end
+        if x76334239464141        then x76334239464141:Disconnect();        x76334239464141        = nil end
+        if x76363046374131        then x76363046374131:Disconnect();        x76363046374131        = nil end
+        local x76314134443146 = x76413343313739.Character
+        if x76314134443146 then x76314134443146.Parent = x76313743453331 or x76314134443146.Parent end
+
+        local x7643757272656E7456656869636C6553656174 = x76383935363345()
+        if x7643757272656E7456656869636C6553656174 then
+            x7643757272656E7456656869636C6553656174.Throttle = 0
+            x7643757272656E7456656869636C6553656174.Steer = 0
+            x7643757272656E7456656869636C6553656174.AssemblyLinearVelocity = Vector3.new()
+            x7643757272656E7456656869636C6553656174.AssemblyAngularVelocity = Vector3.new()
+        end
+
+        x76384642444331:Destroy()
+    end,
+})
+local x76334239464141 = x76323845463645.InputBegan:Connect(function(x76313433433346, x76364237354136)
+    if x76343343374133 then return end
+    if x76364237354136 then return end
+    if x76313433433346.KeyCode == x76373330463544 then
+        x76343637383532 = true; x76393733413834()
+    elseif x76313433433346.KeyCode == x76364331333131 then
+        x76373541434445 = true; x76393733413834()
+    elseif x76313433433346.KeyCode == x76394139444341 then
+         local x76313830433639 = x76383935363345()
+         if x76313830433639 and not x76313830433639.Anchored then
+             x76313830433639.AssemblyLinearVelocity  = Vector3.new()
+             x76313830433639.AssemblyAngularVelocity = Vector3.new()
+         end
+     elseif x76313433433346.KeyCode == x76433338343539 then
+         x76333933343536()
+    end
+end)
+local x76363046374131 = x76323845463645.InputEnded:Connect(function(x76313433433346)
+    if x76343343374133 then return end
+    if x76313433433346.KeyCode == x76373330463544 then
+        x76343637383532 = false; x76393733413834()
+    elseif x76313433433346.KeyCode == x76364331333131 then
+        x76373541434445 = false; x76393733413834()
+    end
+end)
