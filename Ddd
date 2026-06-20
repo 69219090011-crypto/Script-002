@@ -1,0 +1,50 @@
+-- สร้าง Part ดาเมจ
+local part = Instance.new("Part", workspace)
+part.Size = Vector3.new(10,1,10)
+part.Position = Vector3.new(0,5,0)
+part.Anchored = true
+part.BrickColor = BrickColor.new("Bright red")
+part.Name = "DamagePart"
+
+local damage = 10
+local enabled = false
+
+-- ดาเมจเมื่อชน
+part.Touched:Connect(function(hit)
+	if not enabled then return end
+	
+	local char = hit.Parent
+	local humanoid = char and char:FindFirstChildOfClass("Humanoid")
+	
+	if humanoid then
+		humanoid:TakeDamage(damage)
+	end
+end)
+
+-- สร้าง GUI
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,180,0,80)
+frame.Position = UDim2.new(0,50,0,200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,1,-20)
+btn.Position = UDim2.new(0,10,0,10)
+btn.Text = "DAMAGE: OFF"
+
+-- ปุ่มเปิด/ปิด
+btn.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	
+	if enabled then
+		btn.Text = "DAMAGE: ON"
+	else
+		btn.Text = "DAMAGE: OFF"
+	end
+end)
