@@ -1,0 +1,54 @@
+-- สร้าง Part
+local part = Instance.new("Part", workspace)
+part.Size = Vector3.new(10,1,10)
+part.Position = Vector3.new(0,5,0)
+part.Anchored = true
+part.BrickColor = BrickColor.new("Bright blue")
+part.Name = "PushPart"
+
+local enabled = false
+local force = 150 -- แรงดีด (ปรับได้)
+
+-- ฟังก์ชันดีด
+part.Touched:Connect(function(hit)
+	if not enabled then return end
+	
+	local char = hit.Parent
+	local hrp = char and char:FindFirstChild("HumanoidRootPart")
+	
+	if hrp then
+		local bv = Instance.new("BodyVelocity")
+		bv.Velocity = (hrp.CFrame.LookVector * force) + Vector3.new(0,50,0)
+		bv.MaxForce = Vector3.new(1e5,1e5,1e5)
+		bv.Parent = hrp
+		
+		game.Debris:AddItem(bv, 0.3)
+	end
+end)
+
+-- GUI
+local player = game.Players.LocalPlayer
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,180,0,80)
+frame.Position = UDim2.new(0,50,0,200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,1,-20)
+btn.Position = UDim2.new(0,10,0,10)
+btn.Text = "PUSH: OFF"
+
+btn.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	
+	if enabled then
+		btn.Text = "PUSH: ON"
+	else
+		btn.Text = "PUSH: OFF"
+	end
+end)
