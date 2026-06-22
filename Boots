@@ -1,0 +1,53 @@
+-- FPS BOOST SCRIPT
+
+local lighting = game:GetService("Lighting")
+local players = game:GetService("Players")
+
+-- 🔥 ลบ Sky (ท้องฟ้าโล่ง)
+for _,v in pairs(lighting:GetChildren()) do
+	if v:IsA("Sky") then
+		v:Destroy()
+	end
+end
+
+-- 🔥 ลดกราฟิก Lighting
+lighting.GlobalShadows = false
+lighting.FogEnd = 100
+lighting.Brightness = 1
+lighting.ClockTime = 14
+
+-- 🔥 ลด Material ทั้งแมพ
+for _,v in pairs(workspace:GetDescendants()) do
+	if v:IsA("BasePart") then
+		v.Material = Enum.Material.Plastic
+		v.Reflectance = 0
+	end
+end
+
+-- 🔥 ทำผู้เล่นเป็นสีเทา + ไม่มีเสื้อ
+local function simplifyChar(char)
+	for _,v in pairs(char:GetDescendants()) do
+		if v:IsA("Shirt") or v:IsA("Pants") then
+			v:Destroy()
+		end
+		if v:IsA("BasePart") then
+			v.Color = Color3.fromRGB(150,150,150)
+			v.Material = Enum.Material.SmoothPlastic
+		end
+	end
+end
+
+-- ใช้กับผู้เล่นทั้งหมด
+for _,plr in pairs(players:GetPlayers()) do
+	if plr.Character then
+		simplifyChar(plr.Character)
+	end
+	plr.CharacterAdded:Connect(simplifyChar)
+end
+
+players.PlayerAdded:Connect(function(plr)
+	plr.CharacterAdded:Connect(simplifyChar)
+end)
+
+-- 🔥 ลด FOV (มุมมองแคบ)
+workspace.CurrentCamera.FieldOfView = 50
