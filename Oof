@@ -1,0 +1,69 @@
+-- Headless + Korblox (R6) BY 200
+
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+
+local HEADLESS_MESH_ID = "rbxassetid://1095708"
+local KORBLOX_MESH_ID = "rbxassetid://101851696"
+local KORBLOX_TEXTURE_ID = "rbxassetid://101851254"
+
+local function applyHeadless(character)
+	local head = character:FindFirstChild("Head")
+	if not head then return end
+
+	head.Transparency = 1
+	head.CanCollide = false
+
+	
+	local face = head:FindFirstChildOfClass("Decal")
+	if face then face:Destroy() end
+
+
+	for _, v in ipairs(head:GetChildren()) do
+		if v:IsA("SpecialMesh") or v:IsA("CharacterMesh") then
+			v:Destroy()
+		end
+	end
+
+	-- headless mesh
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = HEADLESS_MESH_ID
+	mesh.Scale = Vector3.new(0.001, 0.001, 0.001)
+	mesh.Parent = head
+end
+
+local function applyKorblox(character)
+	local rightLeg = character:FindFirstChild("Right Leg")
+	if not rightLeg then return end
+
+
+	for _, v in ipairs(rightLeg:GetChildren()) do
+		if v:IsA("SpecialMesh") or v:IsA("CharacterMesh") then
+			v:Destroy()
+		end
+	end
+
+	-- Korblox mesh and texture
+	local mesh = Instance.new("SpecialMesh")
+	mesh.MeshType = Enum.MeshType.FileMesh
+	mesh.MeshId = KORBLOX_MESH_ID
+	mesh.TextureId = KORBLOX_TEXTURE_ID
+	mesh.Scale = Vector3.new(1,1,1)
+	mesh.Parent = rightLeg
+end
+
+player.CharacterAdded:Connect(function(character)
+	task.wait(1)
+	applyHeadless(character)
+	applyKorblox(character)
+end)
+
+
+if player.Character then
+	applyHeadless(player.Character)
+	applyKorblox(player.Character)
+end
+
+
+
