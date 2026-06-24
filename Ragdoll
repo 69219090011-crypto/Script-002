@@ -1,21 +1,24 @@
 local player = game.Players.LocalPlayer
 
 local isRagdoll = false
-local savedMotors = {}
+local constraints = {}
 
--- 🔥 ทำให้ล้ม
+-- 🔥 ทำ ragdoll (ไม่พัง / ไม่ตาย)
 local function ragdoll(char)
-	savedMotors = {}
-	
+	constraints = {}
+
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum.BreakJointsOnDeath = false
+		hum.RequiresNeck = false
+		hum:ChangeState(Enum.HumanoidStateType.Physics)
+	end
+
 	for _,v in pairs(char:GetDescendants()) do
 		if v:IsA("Motor6D") then
-			table.insert(savedMotors, {
-				Name = v.Name,
-				Part0 = v.Part0,
-				Part1 = v.Part1,
-				C0 = v.C0,
-				C1 = v.C1
-			})
+			
+			-- ❗ ข้ามคอ (กันตาย)
+			if v.Name == "Neck" then continue end
 			
 			local a0 = Instance.new("Attachment", v.Part0)
 			local a1 = Instance.new("Attachment", v.Part1)
@@ -28,36 +31,24 @@ local function ragdoll(char)
 			joint.Attachment1 = a1
 			joint.Parent = v.Part0
 			
-			v:Destroy()
+			table.insert(constraints, {joint, a0, a1, v})
+			
+			v.Enabled = false -- ❗ ไม่ลบ แค่ปิด
 		end
-	end
-	
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum:ChangeState(Enum.HumanoidStateType.Physics)
 	end
 end
 
 -- 🔥 ลุกกลับ
 local function unragdoll(char)
-	-- ลบ constraint
-	for _,v in pairs(char:GetDescendants()) do
-		if v:IsA("BallSocketConstraint") or v:IsA("Attachment") then
-			v:Destroy()
-		end
+	for _,data in pairs(constraints) do
+		local joint, a0, a1, motor = unpack(data)
+		
+		if joint then joint:Destroy() end
+		if a0 then a0:Destroy() end
+		if a1 then a1:Destroy() end
+		if motor then motor.Enabled = true end
 	end
-	
-	-- สร้าง Motor6D กลับ
-	for _,info in pairs(savedMotors) do
-		local m = Instance.new("Motor6D")
-		m.Name = info.Name
-		m.Part0 = info.Part0
-		m.Part1 = info.Part1
-		m.C0 = info.C0
-		m.C1 = info.C1
-		m.Parent = info.Part0
-	end
-	
+
 	local hum = char:FindFirstChildOfClass("Humanoid")
 	if hum then
 		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
@@ -80,7 +71,6 @@ btn.Size = UDim2.new(1,-20,1,-20)
 btn.Position = UDim2.new(0,10,0,10)
 btn.Text = "RAGDOLL: OFF"
 
--- 🔥 ปุ่มกด
 btn.MouseButton1Click:Connect(function()
 	local char = player.Character
 	if not char then return end
@@ -96,7 +86,6 @@ btn.MouseButton1Click:Connect(function()
 	end
 end)
 
--- 🔥 ตายแล้วรีเซ็ต
 player.CharacterAdded:Connect(function()
 	isRagdoll = false
 	btn.Text = "RAGDOLL: OFF"
