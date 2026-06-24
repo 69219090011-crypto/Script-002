@@ -1,0 +1,103 @@
+local player = game.Players.LocalPlayer
+
+local isRagdoll = false
+local savedMotors = {}
+
+-- 🔥 ทำให้ล้ม
+local function ragdoll(char)
+	savedMotors = {}
+	
+	for _,v in pairs(char:GetDescendants()) do
+		if v:IsA("Motor6D") then
+			table.insert(savedMotors, {
+				Name = v.Name,
+				Part0 = v.Part0,
+				Part1 = v.Part1,
+				C0 = v.C0,
+				C1 = v.C1
+			})
+			
+			local a0 = Instance.new("Attachment", v.Part0)
+			local a1 = Instance.new("Attachment", v.Part1)
+			
+			a0.CFrame = v.C0
+			a1.CFrame = v.C1
+			
+			local joint = Instance.new("BallSocketConstraint")
+			joint.Attachment0 = a0
+			joint.Attachment1 = a1
+			joint.Parent = v.Part0
+			
+			v:Destroy()
+		end
+	end
+	
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum:ChangeState(Enum.HumanoidStateType.Physics)
+	end
+end
+
+-- 🔥 ลุกกลับ
+local function unragdoll(char)
+	-- ลบ constraint
+	for _,v in pairs(char:GetDescendants()) do
+		if v:IsA("BallSocketConstraint") or v:IsA("Attachment") then
+			v:Destroy()
+		end
+	end
+	
+	-- สร้าง Motor6D กลับ
+	for _,info in pairs(savedMotors) do
+		local m = Instance.new("Motor6D")
+		m.Name = info.Name
+		m.Part0 = info.Part0
+		m.Part1 = info.Part1
+		m.C0 = info.C0
+		m.C1 = info.C1
+		m.Parent = info.Part0
+	end
+	
+	local hum = char:FindFirstChildOfClass("Humanoid")
+	if hum then
+		hum:ChangeState(Enum.HumanoidStateType.GettingUp)
+	end
+end
+
+-- 🔥 GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,180,0,80)
+frame.Position = UDim2.new(0,50,0,200)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+
+local btn = Instance.new("TextButton", frame)
+btn.Size = UDim2.new(1,-20,1,-20)
+btn.Position = UDim2.new(0,10,0,10)
+btn.Text = "RAGDOLL: OFF"
+
+-- 🔥 ปุ่มกด
+btn.MouseButton1Click:Connect(function()
+	local char = player.Character
+	if not char then return end
+	
+	isRagdoll = not isRagdoll
+	
+	if isRagdoll then
+		btn.Text = "RAGDOLL: ON"
+		ragdoll(char)
+	else
+		btn.Text = "RAGDOLL: OFF"
+		unragdoll(char)
+	end
+end)
+
+-- 🔥 ตายแล้วรีเซ็ต
+player.CharacterAdded:Connect(function()
+	isRagdoll = false
+	btn.Text = "RAGDOLL: OFF"
+end)
