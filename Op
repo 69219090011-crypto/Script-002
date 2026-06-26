@@ -1,28 +1,56 @@
 local player = game.Players.LocalPlayer
 
+local auto = false
+local percent = 0.5 -- 🔥 50% ต่อรอบ (ปรับได้ เช่น 0.1 = 10%)
+
 -- 🔥 GUI
 local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
 gui.ResetOnSpawn = false
 
 local frame = Instance.new("Frame", gui)
-frame.Size = UDim2.new(0,180,0,80)
+frame.Size = UDim2.new(0,200,0,100)
 frame.Position = UDim2.new(0,50,0,200)
 frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
 frame.Active = true
 frame.Draggable = true
 
 local btn = Instance.new("TextButton", frame)
-btn.Size = UDim2.new(1,-20,1,-20)
+btn.Size = UDim2.new(1,-20,0.5,-10)
 btn.Position = UDim2.new(0,10,0,10)
-btn.Text = "HEAL +50"
+btn.Text = "AUTO HEAL: OFF"
 
--- 🔥 กดแล้วเพิ่มเลือด
+local label = Instance.new("TextLabel", frame)
+label.Size = UDim2.new(1,-20,0.5,-10)
+label.Position = UDim2.new(0,10,0.5,0)
+label.Text = "HEAL: 50%"
+label.TextColor3 = Color3.new(1,1,1)
+label.BackgroundTransparency = 1
+
+-- 🔥 ระบบฮีล
+task.spawn(function()
+	while true do
+		task.wait(0.5)
+		
+		if auto then
+			local char = player.Character
+			if char then
+				local hum = char:FindFirstChildOfClass("Humanoid")
+				if hum and hum.Health > 0 then
+					local amount = hum.MaxHealth * percent
+					hum.Health = math.min(hum.Health + amount, hum.MaxHealth)
+				end
+			end
+		end
+	end
+end)
+
+-- 🔥 ปุ่มเปิด/ปิด
 btn.MouseButton1Click:Connect(function()
-	local char = player.Character
-	if not char then return end
+	auto = not auto
 	
-	local hum = char:FindFirstChildOfClass("Humanoid")
-	if hum then
-		hum.Health = math.min(hum.Health + 50, hum.MaxHealth)
+	if auto then
+		btn.Text = "AUTO HEAL: ON"
+	else
+		btn.Text = "AUTO HEAL: OFF"
 	end
 end)
