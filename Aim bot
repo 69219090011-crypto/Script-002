@@ -1,0 +1,102 @@
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local run = game:GetService("RunService")
+
+local enabled = false
+local menuOpen = true
+local radius = 120
+
+-- 🔥 GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+gui.ResetOnSpawn = false
+
+-- 🟦 ปุ่มเมนูเล็ก (เปิด/ปิด)
+local menuBtn = Instance.new("TextButton", gui)
+menuBtn.Size = UDim2.new(0,50,0,50)
+menuBtn.Position = UDim2.new(0,20,0,100)
+menuBtn.Text = "≡"
+menuBtn.BackgroundColor3 = Color3.fromRGB(40,40,40)
+menuBtn.TextColor3 = Color3.new(1,1,1)
+menuBtn.Active = true
+menuBtn.Draggable = true
+
+-- 🟩 หน้าต่างเมนู
+local frame = Instance.new("Frame", gui)
+frame.Size = UDim2.new(0,200,0,120)
+frame.Position = UDim2.new(0,80,0,100)
+frame.BackgroundColor3 = Color3.fromRGB(30,30,30)
+frame.Active = true
+frame.Draggable = true
+
+-- ปุ่มเปิดระบบล็อก
+local toggle = Instance.new("TextButton", frame)
+toggle.Size = UDim2.new(1,-20,0,40)
+toggle.Position = UDim2.new(0,10,0,10)
+toggle.Text = "LOCK: OFF"
+
+-- วงกลางจอ
+local circle = Instance.new("Frame", gui)
+circle.Size = UDim2.new(0,radius*2,0,radius*2)
+circle.Position = UDim2.new(0.5,-radius,0.5,-radius)
+circle.BackgroundTransparency = 1
+circle.Visible = false
+
+local stroke = Instance.new("UIStroke", circle)
+stroke.Thickness = 2
+stroke.Color = Color3.new(1,1,1)
+
+local corner = Instance.new("UICorner", circle)
+corner.CornerRadius = UDim.new(1,0)
+
+-- 🔥 หาเป้า
+local function getTarget()
+	local closest = nil
+	local shortest = radius
+	
+	for _, plr in pairs(game.Players:GetPlayers()) do
+		if plr ~= player and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+			local pos, onScreen = camera:WorldToViewportPoint(plr.Character.HumanoidRootPart.Position)
+			
+			if onScreen then
+				local dist = (Vector2.new(pos.X, pos.Y) - Vector2.new(camera.ViewportSize.X/2, camera.ViewportSize.Y/2)).Magnitude
+				
+				if dist < shortest then
+					shortest = dist
+					closest = plr
+				end
+			end
+		end
+	end
+	
+	return closest
+end
+
+-- 🔥 ล็อกเป้า
+run.RenderStepped:Connect(function()
+	if enabled then
+		local target = getTarget()
+		
+		if target and target.Character and target.Character:FindFirstChild("HumanoidRootPart") then
+			camera.CFrame = CFrame.new(camera.CFrame.Position, target.Character.HumanoidRootPart.Position)
+		end
+	end
+end)
+
+-- 🔘 เปิด/ปิดล็อก
+toggle.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	
+	if enabled then
+		toggle.Text = "LOCK: ON"
+		circle.Visible = true
+	else
+		toggle.Text = "LOCK: OFF"
+		circle.Visible = false
+	end
+end)
+
+-- 📂 เปิด/ปิดเมนู
+menuBtn.MouseButton1Click:Connect(function()
+	menuOpen = not menuOpen
+	frame.Visible = menuOpen
+end)
