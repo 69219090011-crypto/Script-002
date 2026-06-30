@@ -1,0 +1,21 @@
+local player = game.Players.LocalPlayer
+local camera = workspace.CurrentCamera
+local run = game:GetService("RunService")
+
+-- 🔥 ตั้งค่าซูมไม่จำกัด
+local MAX_ZOOM = 100000
+local MIN_ZOOM = 0.5
+
+-- 🔥 อัปเดตตลอด
+run.RenderStepped:Connect(function()
+	-- ซูมไม่จำกัด
+	player.CameraMaxZoomDistance = MAX_ZOOM
+	player.CameraMinZoomDistance = MIN_ZOOM
+	
+	-- กันเกมล็อกกล้อง
+	if player.Character and player.Character:FindFirstChild("Humanoid") then
+		camera.CameraSubject = player.Character.Humanoid
+	end
+	
+	camera.CameraType = Enum.CameraType.Custom
+end)
