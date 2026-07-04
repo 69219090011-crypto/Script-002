@@ -1,0 +1,195 @@
+local Players = game:GetService("Players")
+local UserInputService = game:GetService("UserInputService")
+local TweenService = game:GetService("TweenService")
+local Debris = game:GetService("Debris")
+
+local player = Players.LocalPlayer
+local playerGui = player:WaitForChild("PlayerGui")
+
+-- Variables
+local humanoid, rootPart
+local lastDashTime = 0
+local connections = {}
+
+-- Create ScreenGui
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "DashGui"
+screenGui.ResetOnSpawn = false
+screenGui.Parent = playerGui
+
+-- Create the Dash button (higher position)
+local dashButton = Instance.new("TextButton")
+dashButton.Name = "DashButton"
+dashButton.Size = UDim2.new(0, 100, 0, 50)
+dashButton.Position = UDim2.new(1, -110, 1, -240)  -- Higher above the Jump button
+dashButton.BackgroundColor3 = Color3.fromRGB(0, 170, 255)
+dashButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+dashButton.Text = "Dash"
+dashButton.Font = Enum.Font.GothamBold
+dashButton.TextSize = 24
+dashButton.BorderSizePixel = 2
+dashButton.BorderColor3 = Color3.fromRGB(0, 0, 0)
+dashButton.BackgroundTransparency = 0.3
+dashButton.Parent = screenGui
+
+-- Update button appearance during cooldown
+local function updateButton(cooldownLeft)
+    if cooldownLeft > 0 then
+        dashButton.Text = string.format("Dash (%.1fs)", cooldownLeft)
+        dashButton.BackgroundTransparency = 0.7
+        dashButton.Active = false
+    else
+        dashButton.Text = "Dash"
+        dashButton.BackgroundTransparency = 0.3
+        dashButton.Active = true
+    end
+end
+
+-- Setup character function
+local function setupCharacter(char)
+    -- Disconnect old connections
+    for _, conn in ipairs(connections) do
+        conn:Disconnect()
+    end
+    connections = {}
+    
+    local hum = char:WaitForChild("Humanoid")
+    local rootp = char:WaitForChild("HumanoidRootPart")
+    
+    humanoid = hum
+    rootPart = rootp
+    
+    -- Connect StateChanged for no fall damage (extended window for longer dash)
+    local stateConn = hum.StateChanged:Connect(function(oldState, newState)
+        if newState == Enum.HumanoidStateType.Landed and tick() - lastDashTime < 5 then
+            hum.Health = hum.MaxHealth
+        end
+    end)
+    table.insert(connections, stateConn)
+end
+
+-- Dash function
+local function performDash()
+    
+    lastDashTime = tick()
+    
+    -- Get the direction the player is facing/moving
+    local moveDirection = humanoid.MoveDirection
+    if moveDirection.Magnitude == 0 then
+        local camera = workspace.CurrentCamera
+        moveDirection = (camera.CFrame.LookVector * Vector3.new(1, 0, 1)).Unit
+    end
+    
+    if moveDirection.Magnitude > 0 then
+        moveDirection = moveDirection.Unit
+        
+        -- Target position 60 studs forward (much farther!)
+        local targetPosition = rootPart.Position + (moveDirection * 60)
+        
+        -- BodyPosition for precise, smooth dash with height hold
+        local bodyPosition = Instance.new("BodyPosition")
+        bodyPosition.MaxForce = Vector3.new(400000, 200000, 400000)
+        bodyPosition.Position = targetPosition
+        bodyPosition.P = 15000
+        bodyPosition.D = 2000
+        bodyPosition.Parent = rootPart
+        
+        -- Longer duration for epic 60-stud dash
+        Debris:AddItem(bodyPosition, 0.8)
+        
+        -- DASH EFFECT: Trail (extended for longer dash)
+        local attach0 = Instance.new("Attachment")
+        attach0.Name = "DashAttach0"
+        attach0.Position = Vector3.new(0, 0.5, 0.5)
+        attach0.Parent = rootPart
+        
+        local attach1 = Instance.new("Attachment")
+        attach1.Name = "DashAttach1"
+        attach1.Position = Vector3.new(0, -0.5, -1.5)
+        attach1.Parent = rootPart
+        
+        local trail = Instance.new("Trail")
+        trail.Attachment0 = attach0
+        trail.Attachment1 = attach1
+        trail.Color = ColorSequence.new({
+            ColorSequenceKeypoint.new(0, Color3.fromRGB(135, 206, 250)),
+            ColorSequenceKeypoint.new(0.5, Color3.fromRGB(70, 130, 255)),
+            ColorSequenceKeypoint.new(1, Color3.fromRGB(0, 100, 200))
+        })
+        trail.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.1),
+            NumberSequenceKeypoint.new(0.7, 0.3),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        trail.Lifetime = 0.8  -- Matches dash duration
+        trail.MinLength = 0.1
+        trail.FaceCamera = true
+        trail.Parent = rootPart
+        
+        Debris:AddItem(trail, 1.2)
+        Debris:AddItem(attach0, 1.2)
+        Debris:AddItem(attach1, 1.2)
+        
+        -- AIR EFFECT: Particle burst (more intense for long dash)
+        local effectAttach = Instance.new("Attachment")
+        effectAttach.Position = Vector3.new(0, 0, -1)
+        effectAttach.Parent = rootPart
+        
+        local pe = Instance.new("ParticleEmitter")
+        pe.Texture = "rbxasset://textures/particles/smoke_main.dds"
+        pe.Lifetime = NumberRange.new(0.3, 0.7)
+        pe.Rate = 0
+        pe.SpreadAngle = Vector2.new(90, 90)
+        pe.Speed = NumberRange.new(8, 20)
+        pe.VelocityInheritance = 0.4
+        pe.Acceleration = Vector3.new(0, -100, 0)
+        pe.Color = ColorSequence.new(Color3.fromRGB(200, 220, 255))
+        pe.Transparency = NumberSequence.new({
+            NumberSequenceKeypoint.new(0, 0.4),
+            NumberSequenceKeypoint.new(1, 1)
+        })
+        pe.LightEmission = 0.3
+        pe.Parent = effectAttach
+        
+        -- Non-blocking burst emit (more particles)
+        spawn(function()
+            pe:Emit(40)
+            task.wait(0.15)
+            pe:Emit(30)
+            task.wait(0.15)
+            pe:Emit(25)
+            task.wait(0.2)
+            pe:Emit(20)
+        end)
+        
+        Debris:AddItem(effectAttach, 2)
+    end
+    
+    -- Non-blocking cooldown timer
+    spawn(function()
+            updateButton(i)
+            task.wait(0.1)
+        end
+        updateButton(0)
+    end)
+end
+
+-- Connect button click
+dashButton.MouseButton1Click:Connect(performDash)
+
+-- Optional: Q key to dash
+UserInputService.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    if input.KeyCode == Enum.KeyCode.Q then
+        performDash()
+    end
+end)
+
+-- Handle character setup
+player.CharacterAdded:Connect(setupCharacter)
+if player.Character then
+    setupCharacter(player.Character)
+end
+
+-- Initial button state
+updateButton(0)
