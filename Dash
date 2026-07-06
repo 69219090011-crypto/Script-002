@@ -1,0 +1,57 @@
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+-- 🔥 ระยะวาร์ป (ปรับได้)
+local distance = 50
+
+-- 🔥 GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+-- ปุ่มวาร์ป
+local dashBtn = Instance.new("TextButton", gui)
+dashBtn.Size = UDim2.new(0,120,0,50)
+dashBtn.Position = UDim2.new(0.8,0,0.8,0)
+dashBtn.Text = "WARP"
+dashBtn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+
+-- ปุ่มเพิ่มระยะ
+local plus = Instance.new("TextButton", gui)
+plus.Size = UDim2.new(0,50,0,50)
+plus.Position = UDim2.new(0.8,130,0.8,0)
+plus.Text = "+"
+
+-- ปุ่มลดระยะ
+local minus = Instance.new("TextButton", gui)
+minus.Size = UDim2.new(0,50,0,50)
+minus.Position = UDim2.new(0.8,-60,0.8,0)
+minus.Text = "-"
+
+-- แสดงค่า
+local label = Instance.new("TextLabel", gui)
+label.Size = UDim2.new(0,120,0,30)
+label.Position = UDim2.new(0.8,0,0.75,0)
+label.Text = "Dist: "..distance
+label.BackgroundTransparency = 1
+
+-- 🔥 ฟังก์ชันวาร์ป
+local function warp()
+	local cam = workspace.CurrentCamera
+	local dir = cam.CFrame.LookVector
+	
+	local newPos = hrp.Position + (dir * distance)
+	hrp.CFrame = CFrame.new(newPos)
+end
+
+-- 🔘 ปุ่มกด
+dashBtn.MouseButton1Click:Connect(warp)
+
+plus.MouseButton1Click:Connect(function()
+	distance = distance + 10
+	label.Text = "Dist: "..distance
+end)
+
+minus.MouseButton1Click:Connect(function()
+	distance = math.max(10, distance - 10)
+	label.Text = "Dist: "..distance
+end)
