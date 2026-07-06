@@ -1,0 +1,80 @@
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+
+local distance = 60
+local enabled = true
+
+-- GUI
+local gui = Instance.new("ScreenGui", player:WaitForChild("PlayerGui"))
+
+-- ปุ่มหลัก
+local btn = Instance.new("TextButton", gui)
+btn.Size = UDim2.new(0,100,0,50)
+btn.Position = UDim2.new(0.8,0,0.7,0)
+btn.Text = "WARP: ON"
+btn.BackgroundColor3 = Color3.fromRGB(0,170,255)
+
+-- ปุ่มเปิด/ปิด
+local toggle = Instance.new("TextButton", gui)
+toggle.Size = UDim2.new(0,100,0,40)
+toggle.Position = UDim2.new(0.8,0,0.6,0)
+toggle.Text = "TOGGLE"
+
+-- วาร์ป
+btn.MouseButton1Click:Connect(function()
+	if not enabled then return end
+	local cam = workspace.CurrentCamera
+	local dir = cam.CFrame.LookVector
+	hrp.CFrame = hrp.CFrame + (dir * distance)
+end)
+
+-- เปิด/ปิด
+toggle.MouseButton1Click:Connect(function()
+	enabled = not enabled
+	btn.Text = enabled and "WARP: ON" or "WARP: OFF"
+	btn.BackgroundColor3 = enabled and Color3.fromRGB(0,170,255) or Color3.fromRGB(100,100,100)
+end)
+
+-- ลากปุ่มได้
+local UIS = game:GetService("UserInputService")
+
+local function makeDraggable(obj)
+	local dragging = false
+	local dragInput, dragStart, startPos
+
+	obj.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 then
+			dragging = true
+			dragStart = input.Position
+			startPos = obj.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	obj.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement then
+			dragInput = input
+		end
+	end)
+
+	UIS.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			local delta = input.Position - dragStart
+			obj.Position = UDim2.new(
+				startPos.X.Scale,
+				startPos.X.Offset + delta.X,
+				startPos.Y.Scale,
+				startPos.Y.Offset + delta.Y
+			)
+		end
+	end)
+end
+
+makeDraggable(btn)
+makeDraggable(toggle)
