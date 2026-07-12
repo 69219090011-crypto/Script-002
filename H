@@ -1,0 +1,67 @@
+local player = game.Players.LocalPlayer
+local char = player.Character or player.CharacterAdded:Wait()
+local hrp = char:WaitForChild("HumanoidRootPart")
+local mouse = player:GetMouse()
+
+local radius = 15
+local height = 12
+local spinSpeed = 6
+local objects = {}
+local attacking = false
+
+-- ดูดของแรงขึ้นแบบบอส
+for _, v in pairs(workspace:GetDescendants()) do
+	if v:IsA("BasePart") and not v.Anchored and (v.Position - hrp.Position).Magnitude < 50 then
+		table.insert(objects, v)
+	end
+end
+
+-- ทำให้ลอย
+for _, obj in pairs(objects) do
+	obj.Anchored = true
+end
+
+-- พายุหมุนรอบตัว (เกลียวขึ้นฟ้า)
+game:GetService("RunService").RenderStepped:Connect(function()
+	for i, obj in pairs(objects) do
+		if obj and obj.Parent then
+			local angle = (i * math.pi * 2 / #objects) + (tick() * spinSpeed)
+			local yOffset = math.sin(tick()*2 + i) * height
+			
+			local pos = hrp.Position + Vector3.new(
+				math.cos(angle) * radius,
+				5 + yOffset,
+				math.sin(angle) * radius
+			)
+			
+			obj.Position = pos
+		end
+	end
+end)
+
+-- ยิงรัวแบบบอส (กดค้าง)
+mouse.Button1Down:Connect(function()
+	attacking = true
+	
+	while attacking and #objects > 0 do
+		local target = mouse.Hit.Position
+		
+		local obj = table.remove(objects, 1)
+		if obj and obj.Parent then
+			obj.Anchored = false
+			
+			local bv = Instance.new("BodyVelocity")
+			bv.Velocity = (target - obj.Position).Unit * 150
+			bv.MaxForce = Vector3.new(1e6,1e6,1e6)
+			bv.Parent = obj
+
+			game.Debris:AddItem(bv, 0.2)
+		end
+		
+		wait(0.05) -- ยิงรัว
+	end
+end)
+
+mouse.Button1Up:Connect(function()
+	attacking = false
+end)
