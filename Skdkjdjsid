@@ -1,0 +1,21 @@
+local char = game.Players.LocalPlayer.Character or game.Players.LocalPlayer.CharacterAdded:Wait()
+
+for _,v in pairs(char:GetDescendants()) do
+	if v:IsA("Motor6D") then
+		local part0 = v.Part0
+		local part1 = v.Part1
+		
+		local a0 = Instance.new("Attachment", part0)
+		local a1 = Instance.new("Attachment", part1)
+		
+		a0.CFrame = v.C0
+		a1.CFrame = v.C1
+		
+		local rigid = Instance.new("RigidConstraint")
+		rigid.Attachment0 = a0
+		rigid.Attachment1 = a1
+		rigid.Parent = part0
+		
+		v:Destroy()
+	end
+end
