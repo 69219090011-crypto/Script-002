@@ -1,0 +1,181 @@
+-- ใส่ใน LocalScript (StarterGui หรือ StarterPlayerScripts)
+
+local player = game.Players.LocalPlayer
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+
+-- สร้าง GUI หลัก
+local screenGui = Instance.new("ScreenGui")
+screenGui.Name = "FlyGui"
+screenGui.Parent = player:WaitForChild("PlayerGui")
+
+-- ปุ่ม Fly
+local flyButton = Instance.new("TextButton")
+flyButton.Size = UDim2.new(0, 100, 0, 50)
+flyButton.Position = UDim2.new(0, 20, 0, 20)
+flyButton.Text = "Fly: OFF"
+flyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+flyButton.TextColor3 = Color3.new(1, 1, 1)
+flyButton.Font = Enum.Font.SourceSansBold
+flyButton.TextSize = 20
+flyButton.Parent = screenGui
+
+-- กรอบแสดง/ปรับความเร็ว
+local speedLabel = Instance.new("TextLabel")
+speedLabel.Size = UDim2.new(0, 160, 0, 30)
+speedLabel.Position = UDim2.new(0, 20, 0, 80)
+speedLabel.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+speedLabel.TextColor3 = Color3.new(1, 1, 1)
+speedLabel.Font = Enum.Font.SourceSansBold
+speedLabel.TextSize = 18
+speedLabel.Parent = screenGui
+
+local speedDownButton = Instance.new("TextButton")
+speedDownButton.Size = UDim2.new(0, 40, 0, 30)
+speedDownButton.Position = UDim2.new(0, 190, 0, 80)
+speedDownButton.Text = "-"
+speedDownButton.Font = Enum.Font.SourceSansBold
+speedDownButton.TextSize = 24
+speedDownButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+speedDownButton.TextColor3 = Color3.new(1, 1, 1)
+speedDownButton.Parent = screenGui
+
+local speedUpButton = Instance.new("TextButton")
+speedUpButton.Size = UDim2.new(0, 40, 0, 30)
+speedUpButton.Position = UDim2.new(0, 240, 0, 80)
+speedUpButton.Text = "+"
+speedUpButton.Font = Enum.Font.SourceSansBold
+speedUpButton.TextSize = 24
+speedUpButton.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+speedUpButton.TextColor3 = Color3.new(1, 1, 1)
+speedUpButton.Parent = screenGui
+
+-- ตัวแปรควบคุมการบิน
+local flying = false
+local flySpeed = 50
+local minSpeed = 10
+local maxSpeed = 300
+local speedStep = 10
+
+local bodyVelocity, bodyGyro
+
+local function updateSpeedLabel()
+    speedLabel.Text = "Speed: " .. flySpeed
+end
+updateSpeedLabel()
+
+local function getCharacterParts()
+    local char = player.Character
+    if not char then return nil end
+    return char:FindFirstChild("HumanoidRootPart")
+end
+
+local function startFly()
+    local hrp = getCharacterParts()
+    if not hrp then return end
+
+    flying = true
+    flyButton.Text = "Fly: ON"
+    flyButton.BackgroundColor3 = Color3.fromRGB(50, 200, 50)
+
+    bodyVelocity = Instance.new("BodyVelocity")
+    bodyVelocity.MaxForce = Vector3.new(1, 1, 1) * math.huge
+    bodyVelocity.Velocity = Vector3.new(0, 0, 0)
+    bodyVelocity.Parent = hrp
+
+    bodyGyro = Instance.new("BodyGyro")
+    bodyGyro.MaxTorque = Vector3.new(1, 1, 1) * math.huge
+    bodyGyro.P = 10000
+    bodyGyro.Parent = hrp
+end
+
+local function stopFly()
+    flying = false
+    flyButton.Text = "Fly: OFF"
+    flyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+
+    if bodyVelocity then bodyVelocity:Destroy() end
+    if bodyGyro then bodyGyro:Destroy() end
+end
+
+flyButton.MouseButton1Click:Connect(function()
+    if flying then
+        stopFly()
+    else
+        startFly()
+    end
+end)
+
+-- ปุ่มปรับความเร็ว
+speedUpButton.MouseButton1Click:Connect(function()
+    flySpeed = math.min(flySpeed + speedStep, maxSpeed)
+    updateSpeedLabel()
+end)
+
+speedDownButton.MouseButton1Click:Connect(function()
+    flySpeed = math.max(flySpeed - speedStep, minSpeed)
+    updateSpeedLabel()
+end)
+
+-- รับ Input สำหรับบิน (W A S D + Space/Shift ขึ้นลง)
+local keysDown = {}
+
+UIS.InputBegan:Connect(function(input, gameProcessed)
+    if gameProcessed then return end
+    keysDown[input.KeyCode] = true
+
+    -- ปรับความเร็วด้วยคีย์บอร์ดก็ได้ (= เพิ่ม, - ลด)
+    if input.KeyCode == Enum.KeyCode.Equals then
+        flySpeed = math.min(flySpeed + speedStep, maxSpeed)
+        updateSpeedLabel()
+    elseif input.KeyCode == Enum.KeyCode.Minus then
+        flySpeed = math.max(flySpeed - speedStep, minSpeed)
+        updateSpeedLabel()
+    end
+end)
+
+UIS.InputEnded:Connect(function(input, gameProcessed)
+    keysDown[input.KeyCode] = nil
+end)
+
+RunService.RenderStepped:Connect(function()
+    if not flying then return end
+    local hrp = getCharacterParts()
+    if not hrp or not bodyVelocity or not bodyGyro then return end
+
+    local camera = workspace.CurrentCamera
+    local moveDir = Vector3.new(0, 0, 0)
+
+    if keysDown[Enum.KeyCode.W] then
+        moveDir = moveDir + camera.CFrame.LookVector
+    end
+    if keysDown[Enum.KeyCode.S] then
+        moveDir = moveDir - camera.CFrame.LookVector
+    end
+    if keysDown[Enum.KeyCode.A] then
+        moveDir = moveDir - camera.CFrame.RightVector
+    end
+    if keysDown[Enum.KeyCode.D] then
+        moveDir = moveDir + camera.CFrame.RightVector
+    end
+    if keysDown[Enum.KeyCode.Space] then
+        moveDir = moveDir + Vector3.new(0, 1, 0)
+    end
+    if keysDown[Enum.KeyCode.LeftShift] then
+        moveDir = moveDir - Vector3.new(0, 1, 0)
+    end
+
+    if moveDir.Magnitude > 0 then
+        moveDir = moveDir.Unit
+    end
+
+    bodyVelocity.Velocity = moveDir * flySpeed
+    bodyGyro.CFrame = camera.CFrame
+end)
+
+-- รีเซ็ตเมื่อตัวละครตาย/เกิดใหม่
+player.CharacterAdded:Connect(function()
+    flying = false
+    flyButton.Text = "Fly: OFF"
+    flyButton.BackgroundColor3 = Color3.fromRGB(200, 50, 50)
+end)
